@@ -58,7 +58,7 @@ def adjacency(x, y, r):
     return A, D
 
 
-def simulate(x, y, v, r, loss, policy, rng):
+def simulate(x, y, v, r, loss, policy, rng, return_rx=False):
     """policy(i, sender, ctx) -> (재전송 여부, 대기시간) ; ctx에 그래프 정보.
     거리 타이머 계열은 policy가 'cancel' 콜백을 갖는다."""
     n = len(x)
@@ -100,10 +100,13 @@ def simulate(x, y, v, r, loss, policy, rng):
     can = reach_set(A, back)  # 범위 안 경로로 닿을 수 있는 차량
     aff = (back > 0) & (back <= AREA) & can
     near = (back > 0) & (back <= NEAR) & can
+    hr = (back > 0) & (back <= v * 1.5 + v * v / 12.0) & can  # 정지거리 안 = 고위험
     dup = sum(len(h) for h in heard) - int(np.isfinite(t_rx).sum() - 1)
-    return dict(
+    extra = {"got": np.isfinite(t_rx)} if return_rx else {}
+    return dict(**extra,
         reach=float(np.isfinite(t_rx[aff]).mean()) if aff.any() else np.nan,
         reach_near=float(np.isfinite(t_rx[near]).mean()) if near.any() else np.nan,
+        reach_hr=float(np.isfinite(t_rx[hr]).mean()) if hr.any() else np.nan,
         tx=tx, n_aff=int(aff.sum()), dup=dup,
         lat=float(np.max(t_rx[aff & np.isfinite(t_rx)], initial=0) * 1000),
         connected=bool(aff.sum() == ((back > 0) & (back <= AREA)).sum()),

@@ -215,3 +215,94 @@ class ExpectedCoverage(DistTimer):
 
 
 EXTRA["V5"] = lambda rng: ExpectedCoverage()
+
+
+# ---------------- C1: 선행 기본형 비교군 (Ni et al. 1999) ----------------
+class CounterBased:
+    """counter-based: 무작위 대기 동안 같은 메시지를 C번 이상 들으면 취소."""
+    def __init__(self, C=2, rng=None):
+        self.C, self.rng, self.name = C, rng, f"counter(C={C})"
+    def __call__(self, i, s, ctx):
+        return True, self.rng.uniform(0, TMAX)
+    def cancelled(self, i, heard, ctx):
+        return len(heard) >= self.C
+
+
+class NiDistance:
+    """distance-based: 들은 송신자 중 가장 가까운 거리가 D 미만이면 취소 (새 커버리지 작음)."""
+    def __init__(self, frac=0.5, rng=None):
+        self.frac, self.rng, self.name = frac, rng, f"ni-distance({frac})"
+    def __call__(self, i, s, ctx):
+        return True, self.rng.uniform(0, TMAX)
+    def cancelled(self, i, heard, ctx):
+        return min(ctx["D"][i, h] for h in heard) < self.frac * ctx["r"]
+
+
+EXTRA["counter2"] = lambda rng: CounterBased(2, rng)
+EXTRA["counter3"] = lambda rng: CounterBased(3, rng)
+EXTRA["ni-dist"] = lambda rng: NiDistance(0.5, rng)
+
+
+# ---------------- C2: 위험도 인지 경합 정책군 (RAC) ----------------
+class RAC(DistTimer):
+    """Risk-Aware Contention.
+    우선순위 = alpha*후방진행 + (1-alpha)*기대 새 커버리지 → 대기 = TMAX*(1-우선순위)
+    억제: 뒤쪽 재전송을 k번 들으면 취소, k = k_base + k_near*[고위험] + k_loss*[손실>=0.2]
+    가지치기: 기대 새 커버리지 < g 이면 재전송 안 함."""
+    def __init__(self, alpha=0.5, k_base=1, k_near=1, g=0.5, k_loss=0, risk_mode="zone"):
+        self.alpha, self.k_base, self.k_near, self.g, self.k_loss = alpha, k_base, k_near, g, k_loss
+        self.risk_mode = risk_mode
+        self.name = f"RAC(a{alpha},k{k_base}+{k_near}+{k_loss},g{g},{risk_mode})"
+    def gain(self, i, s, ctx):
+        A, x, back, p = ctx["A"], ctx["x"], ctx["back"], ctx["loss"]
+        mine = A[i] & (x < x[i]) & (back <= _AREA)
+        new = (mine & ~A[s]).sum() + p * (mine & A[s]).sum()
+        return new, max(mine.sum(), 1)
+    def __call__(self, i, s, ctx):
+        new, m = self.gain(i, s, ctx)
+        if new < self.g:
+            return False, 0.0
+        prog = min(max(0.0, ctx["x"][s] - ctx["x"][i]), ctx["r"]) / ctx["r"]
+        pr = self.alpha * prog + (1 - self.alpha) * new / m
+        return True, TMAX * (1 - pr)
+    def high_risk(self, i, ctx):
+        if self.risk_mode == "zone":
+            return ctx["back"][i] <= NEAR
+        if self.risk_mode == "stop":  # 반응 1.5 s + 6 m/s^2 제동 정지거리 안
+            v = ctx["v"][i]
+            return ctx["back"][i] <= v * 1.5 + v * v / 12.0
+        return ctx["R"][i] >= T  # 'R': 뉴런 역치로 고위험 판정
+    def cancelled(self, i, heard, ctx):
+        x = ctx["x"]
+        c = sum(x[h] < x[i] for h in heard)
+        k = self.k_base + self.k_near * self.high_risk(i, ctx) + self.k_loss * (ctx["loss"] >= 0.2)
+        return c >= k
+
+
+# ---------------- C6: 학습 우선순위 결합 (SIGN 모델) ----------------
+class LearnedRAC(RAC):
+    """RAC* + 그래프 모델이 예측한 기대 결정성 c_i.
+    c_i >= theta 인 차량은 가지치기 면제 + 우선순위 가산 gamma."""
+    _model = None
+    def __init__(self, theta=0.05, gamma=0.3, **kw):
+        super().__init__(0.5, 1, 1, 0.5, 0, "stop")
+        self.theta, self.gamma = theta, gamma
+        self.name = f"LRAC(th{theta},g{gamma})"
+    def prepare(self, ctx):
+        import pickle
+        from gnn_lite import node_features
+        if LearnedRAC._model is None:
+            LearnedRAC._model = pickle.load(open("models/sign.pkl", "rb"))
+        F = node_features(ctx["x"], ctx["y"], ctx["v"], ctx["r"], ctx["loss"], ctx["A"])
+        self.c = np.clip(LearnedRAC._model.predict(F), 0, 1)
+    def __call__(self, i, s, ctx):
+        crit = self.c[i] >= self.theta
+        new, m = self.gain(i, s, ctx)
+        if new < self.g and not crit:
+            return False, 0.0
+        prog = min(max(0.0, ctx["x"][s] - ctx["x"][i]), ctx["r"]) / ctx["r"]
+        pr = 0.5 * prog + 0.5 * new / m + self.gamma * crit
+        return True, TMAX * (1 - min(pr, 1.0))
+
+
+FINAL_EXTRA = {"LRAC": lambda pr: LearnedRAC(0.05, 0.3)}

@@ -36,6 +36,7 @@ def main():
     ap.add_argument("--r", default="100,150,300")
     ap.add_argument("--loss", default="0,0.1,0.3")
     ap.add_argument("--tau", default="0")
+    ap.add_argument("--seed0", type=int, default=0)
     ap.add_argument("--policies", default="flooding,p-persist,threshold,dist-timer,MPR,oracle")
     a = ap.parse_args()
     rows = []; t0 = time.time()
@@ -44,7 +45,7 @@ def main():
         for r in map(float, a.r.split(",")):
             for loss in map(float, a.loss.split(",")):
                 for tau in map(float, a.tau.split(",")):
-                    for s in range(a.seeds):
+                    for s in range(a.seed0, a.seed0 + a.seeds):
                         g = np.random.default_rng(1000 * s + 7)
                         x, y, v = snapshot(g, rho, tau=tau)
                         for name in names:
