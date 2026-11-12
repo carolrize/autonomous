@@ -292,7 +292,15 @@ class LearnedRAC(RAC):
         import pickle
         from gnn_lite import node_features
         if LearnedRAC._model is None:
-            LearnedRAC._model = pickle.load(open("models/sign.pkl", "rb"))
+            import os
+            path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "models", "sign.pkl")
+            try:
+                LearnedRAC._model = pickle.load(open(path, "rb"))
+                LearnedRAC._model.predict(np.zeros((1, 30)))
+            except Exception:  # 파일 없음·sklearn 버전 차이 → 그 자리에서 다시 학습 (약 10초)
+                import subprocess, sys
+                subprocess.run([sys.executable, "gnn_lite.py"], cwd=os.path.dirname(os.path.abspath(__file__)), check=True)
+                LearnedRAC._model = pickle.load(open(path, "rb"))
         F = node_features(ctx["x"], ctx["y"], ctx["v"], ctx["r"], ctx["loss"], ctx["A"])
         self.c = np.clip(LearnedRAC._model.predict(F), 0, 1)
     def __call__(self, i, s, ctx):

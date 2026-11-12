@@ -1,0 +1,8 @@
+highway-env==1.12.1
+gymnasium
+numpy
+pandas
+scipy
+scikit-learn
+pillow
+matplotlib
