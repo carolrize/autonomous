@@ -86,6 +86,8 @@ Claude Code용 프로젝트 맥락 문서 (claude.ai 채팅 요약, 2026-11-12 �
   - 예비 분석: prelim.py, labelcheck.py
   - 뉴런역치_V2V_GNN_통합발표.pptx (34장), 연구 계획 문서(Claude Docs, 1~4절)
 
+**2주 실행 계획 (2026-11-13 ~ 11-26)**: Notion "V2V 역치-GNN 릴레이 연구 · 2주 실행 계획" (https://app.notion.com/p/416c7e72792f810bb918f2d2f6685022). 날짜별(D1~D14) 지시를 받으면 그 페이지의 해당 날 항목을 따른다. SUMO·Veins는 2주 범위에서 제외.
+
 **다음 할 일**
 1. quick 결과 확인 → 이 문서 7절 갱신
 2. SUMO 환경 구축 (최소판 1주차)
