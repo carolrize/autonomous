@@ -70,7 +70,7 @@ def simulate(x, y, v, r, loss, policy, rng, return_rx=False):
 
     t_rx = np.full(n, np.inf); t_rx[0] = 0.0
     heard = [[] for _ in range(n)]  # 들은 송신자 목록
-    tx = 0
+    tx = 0; sent = []
     cnt = itertools.count()
     ev = [(0.0, next(cnt), 0)]      # (송신 시각, tie, 송신자)
     pending = {}
@@ -82,6 +82,7 @@ def simulate(x, y, v, r, loss, policy, rng, return_rx=False):
         if hasattr(policy, "cancelled") and s != 0 and policy.cancelled(s, heard[s], ctx):
             continue
         tx += 1
+        sent.append(s)
         nb = np.where(A[s])[0]
         ok = nb[rng.random(len(nb)) >= loss]
         for j in ok:
@@ -102,7 +103,7 @@ def simulate(x, y, v, r, loss, policy, rng, return_rx=False):
     near = (back > 0) & (back <= NEAR) & can
     hr = (back > 0) & (back <= v * 1.5 + v * v / 12.0) & can  # 정지거리 안 = 고위험
     dup = sum(len(h) for h in heard) - int(np.isfinite(t_rx).sum() - 1)
-    extra = {"got": np.isfinite(t_rx)} if return_rx else {}
+    extra = {"got": np.isfinite(t_rx), "sent": sent} if return_rx else {}
     return dict(**extra,
         reach=float(np.isfinite(t_rx[aff]).mean()) if aff.any() else np.nan,
         reach_near=float(np.isfinite(t_rx[near]).mean()) if near.any() else np.nan,
