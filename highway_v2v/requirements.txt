@@ -1,0 +1,4 @@
+highway-env==1.12.1
+gymnasium
+matplotlib
+numpy
