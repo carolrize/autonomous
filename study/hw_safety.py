@@ -20,6 +20,8 @@ import core, policies as P
 SEED0 = int(sys.argv[1]) if len(sys.argv) > 1 else 0
 B_UNW = float(sys.argv[2]) if len(sys.argv) > 2 else 4.0
 REACT = float(sys.argv[3]) if len(sys.argv) > 3 else 1.0  # 미경고 차량의 반응 지연 [s]
+AREA0 = 500.0
+GROW = float(sys.argv[5]) if len(sys.argv) > 5 else 20.0  # 전달 범위 확장 속도 [m/s]
 HEADWAY = float(sys.argv[4]) if len(sys.argv) > 4 else 0.8  # IDM 차간 시간 [s] (기본 1.5 → 촘촘한 고속도로)
 IDMVehicle.TIME_WANTED = HEADWAY
 DT_POLICY = 0.2
@@ -82,7 +84,7 @@ def run(seed, make, r, loss):
         patch(v, hazard)
     lead = max(b.road.vehicles, key=lambda v: v.position[0])
     pr = np.random.default_rng(seed)
-    tx = 0; min_ttc = np.inf; pre_crash = 0
+    tx = 0; min_ttc = np.inf; pre_crash = 0; expo = 0.0
     for k in range(int(14 / DT_POLICY)):
         t = k * DT_POLICY
         if hazard[0] is None and t >= 2.0:
@@ -91,20 +93,24 @@ def run(seed, make, r, loss):
         if hazard[0] is not None and make is not None and abs((t - 2.0) % 1.0) < 1e-9:
             vs = [lead] + [v for v in b.road.vehicles if v is not lead]
             x = np.array([v.position[0] for v in vs]); y = np.array([v.position[1] for v in vs]); sp = np.array([v.speed for v in vs])
-            out = core.simulate(x, y, sp, r, loss, make(pr), pr, return_rx=True)
+            out = core.simulate(x, y, sp, r, loss, make(pr), pr, return_rx=True, area=AREA0 + GROW * (t - 2.0))
             tx += out["tx"]
             for v, g in zip(vs, out["got"]):
                 v.warned = v.warned or bool(g)
         env.step(0)
         for v in b.road.vehicles:  # 같은 차선 앞차와 TTC
-            if v is lead or v.crashed:
+            if v is lead or (v.crashed and getattr(v, 'was_crashed', False)):
                 continue
+            v.was_crashed = v.crashed
             fv, _ = b.road.neighbour_vehicles(v, v.lane_index)
             if fv is not None and v.speed > fv.speed:
-                min_ttc = min(min_ttc, (fv.position[0] - v.position[0] - 5) / (v.speed - fv.speed))
+                ttc = (fv.position[0] - v.position[0] - 5) / (v.speed - fv.speed)
+                min_ttc = min(min_ttc, ttc)
+                if hazard[0] is not None and ttc < 1.5:
+                    expo += DT_POLICY  # TTC<1.5 s 노출 (차량·초)
     crashed = sum(v.crashed for v in b.road.vehicles) - pre_crash
     env.close()
-    return dict(crashed=crashed, any_crash=int(crashed > 0), min_ttc=min_ttc, tx=tx)
+    return dict(crashed=crashed, any_crash=int(crashed > 0), min_ttc=min_ttc, expo=expo, tx=tx)
 
 def P_brake(v):
     def act(self, action=None):
@@ -120,6 +126,6 @@ if __name__ == "__main__":
         if f is None and loss > 0:
             continue
         rows.append(dict(policy=k, loss=loss, seed=s, **run(s, f, 100.0, loss)))
-    D = pd.DataFrame(rows); D.to_csv(f"results/hw_safety_{SEED0}_B{B_UNW}_R{REACT}_H{HEADWAY}.csv", index=False)
+    D = pd.DataFrame(rows); D.to_csv(f"results/hw_safety_{SEED0}_B{B_UNW}_R{REACT}_H{HEADWAY}_G{GROW}.csv", index=False)
     print(D.groupby(["policy", "loss"]).agg(crash_rate=("any_crash", "mean"), crashed=("crashed", "mean"),
-                                           min_ttc=("min_ttc", "median"), tx=("tx", "mean")).round(3).to_string())
+                                           min_ttc=("min_ttc", "median"), expo=("expo", "mean"), tx=("tx", "mean")).round(3).to_string())

@@ -58,13 +58,14 @@ def adjacency(x, y, r):
     return A, D
 
 
-def simulate(x, y, v, r, loss, policy, rng, return_rx=False):
+def simulate(x, y, v, r, loss, policy, rng, return_rx=False, area=None):
+    area = AREA if area is None else area
     """policy(i, sender, ctx) -> (재전송 여부, 대기시간) ; ctx에 그래프 정보.
     거리 타이머 계열은 policy가 'cancel' 콜백을 갖는다."""
     n = len(x)
     A, D = adjacency(x, y, r)
     back = x[0] - x
-    ctx = dict(loss=loss, x=x, y=y, v=v, r=r, A=A, D=D, back=back, R=risk(x, v), first_from={}, n=n)
+    ctx = dict(area=area, loss=loss, x=x, y=y, v=v, r=r, A=A, D=D, back=back, R=risk(x, v), first_from={}, n=n)
     if hasattr(policy, "prepare"):
         policy.prepare(ctx)
 
@@ -91,15 +92,15 @@ def simulate(x, y, v, r, loss, policy, rng, return_rx=False):
                 continue
             t_rx[j] = t + 1e-4  # 전송 시간
             ctx["first_from"][j] = s
-            if back[j] > AREA:
+            if back[j] > area:
                 continue  # 범위 밖: 재전송 안 함
             fwd, wait = policy(j, s, ctx)
             if fwd:
                 tf = t_rx[j] + wait + rng.uniform(0, JITTER)
                 pending[j] = tf
                 heapq.heappush(ev, (tf, next(cnt), j))
-    can = reach_set(A, back)  # 범위 안 경로로 닿을 수 있는 차량
-    aff = (back > 0) & (back <= AREA) & can
+    can = reach_set(A, back, area)  # 범위 안 경로로 닿을 수 있는 차량
+    aff = (back > 0) & (back <= area) & can
     near = (back > 0) & (back <= NEAR) & can
     hr = (back > 0) & (back <= v * 1.5 + v * v / 12.0) & can  # 정지거리 안 = 고위험
     dup = sum(len(h) for h in heard) - int(np.isfinite(t_rx).sum() - 1)
@@ -110,16 +111,16 @@ def simulate(x, y, v, r, loss, policy, rng, return_rx=False):
         reach_hr=float(np.isfinite(t_rx[hr]).mean()) if hr.any() else np.nan,
         tx=tx, n_aff=int(aff.sum()), dup=dup,
         lat=float(np.max(t_rx[aff & np.isfinite(t_rx)], initial=0) * 1000),
-        connected=bool(aff.sum() == ((back > 0) & (back <= AREA)).sum()),
+        connected=bool(aff.sum() == ((back > 0) & (back <= area)).sum()),
     )
 
 
-def reach_set(A, back):
+def reach_set(A, back, area=AREA):
     """급정거 차량에서 범위 안 차량만 거쳐 닿을 수 있는 차량 (bool 배열)."""
     seen = np.zeros(len(A), bool); seen[0] = True; st = [0]
     while st:
         i = st.pop()
-        if back[i] > AREA:
+        if back[i] > area:
             continue
         for j in np.where(A[i] & ~seen)[0]:
             seen[j] = True; st.append(j)

@@ -175,7 +175,7 @@ class RiskCoverage(DistTimer):
         self.k = k
     def __call__(self, i, s, ctx):
         A, x, back = ctx["A"], ctx["x"], ctx["back"]
-        mine = A[i] & (x < x[i]) & (back <= _AREA)
+        mine = A[i] & (x < x[i]) & (back <= ctx.get("area", _AREA))
         new = mine & ~A[s]
         if new.sum() == 0:
             return False, 0.0
@@ -200,7 +200,7 @@ class ExpectedCoverage(DistTimer):
         self.k_near, self.min_gain = k_near, min_gain
     def __call__(self, i, s, ctx):
         A, x, back, p = ctx["A"], ctx["x"], ctx["back"], ctx["loss"]
-        mine = A[i] & (x < x[i]) & (back <= _AREA)
+        mine = A[i] & (x < x[i]) & (back <= ctx.get("area", _AREA))
         new = (mine & ~A[s]).sum() + p * (mine & A[s]).sum()  # 송신자 이웃도 p 확률로 못 받았을 수 있음
         if new < self.min_gain:
             return False, 0.0
@@ -255,7 +255,7 @@ class RAC(DistTimer):
         self.name = f"RAC(a{alpha},k{k_base}+{k_near}+{k_loss},g{g},{risk_mode})"
     def gain(self, i, s, ctx):
         A, x, back, p = ctx["A"], ctx["x"], ctx["back"], ctx["loss"]
-        mine = A[i] & (x < x[i]) & (back <= _AREA)
+        mine = A[i] & (x < x[i]) & (back <= ctx.get("area", _AREA))
         new = (mine & ~A[s]).sum() + p * (mine & A[s]).sum()
         return new, max(mine.sum(), 1)
     def __call__(self, i, s, ctx):
