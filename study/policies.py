@@ -306,3 +306,74 @@ class LearnedRAC(RAC):
 
 
 FINAL_EXTRA = {"LRAC": lambda pr: LearnedRAC(0.05, 0.3)}
+
+
+# ---------------- D1: 긴급도 기반 신뢰도 예산 (RAC-U) ----------------
+class UrgencyRAC(LearnedRAC):
+    """차량마다 정지 여유 시간 m = (후방거리 - 정지거리)/속도 로 목표 누락확률 eps를 정하고,
+    뒤쪽 재전송을 k = ceil(log eps / log p) 번 들어야 취소 (1~k_max). p = 링크 손실 추정치.
+    m<0(이미 정지거리 안): eps_hi, m<M_s: eps_mid, 그 외: k=1."""
+    def __init__(self, eps_hi=0.01, eps_mid=0.1, M_s=2.0, k_max=3, learned=True):
+        super().__init__(0.05, 0.3 if learned else 0.0)
+        self.eps_hi, self.eps_mid, self.M_s, self.k_max, self.learned = eps_hi, eps_mid, M_s, k_max, learned
+        self.name = f"RAC-U(e{eps_hi}/{eps_mid},M{M_s},L{int(learned)})"
+    def prepare(self, ctx):
+        if self.learned:
+            super().prepare(ctx)
+        else:
+            self.c = np.zeros(ctx["n"])
+    def k_of(self, i, ctx):
+        v = max(ctx["v"][i], 1.0)
+        m = (ctx["back"][i] - (v * 1.5 + v * v / 12.0)) / v
+        p = max(ctx["loss"], 0.01)
+        eps = self.eps_hi if m < 0 else (self.eps_mid if m < self.M_s else None)
+        if eps is None:
+            return 1
+        return int(np.clip(np.ceil(np.log(eps) / np.log(p)), 1, self.k_max))
+    def cancelled(self, i, heard, ctx):
+        x = ctx["x"]
+        c = sum(x[h] < x[i] for h in heard)
+        return c >= self.k_of(i, ctx)
+
+
+class UrgencyRAC2(UrgencyRAC):
+    """D3: 손실 >= prune_off 이면 가지치기 끔."""
+    def __init__(self, eps_hi=0.01, eps_mid=0.1, M_s=2.0, prune_off=1.0, learned=True):
+        super().__init__(eps_hi, eps_mid, M_s, 3, learned)
+        self.prune_off = prune_off
+        self.name = f"RAC-U2(e{eps_mid},off{prune_off})"
+    def __call__(self, i, s, ctx):
+        if ctx["loss"] >= self.prune_off:
+            g0 = self.g; self.g = -1
+            out = super().__call__(i, s, ctx); self.g = g0
+            return out
+        return super().__call__(i, s, ctx)
+
+
+class UrgencyRAC3(UrgencyRAC2):
+    """D5: 내 후방 이웃 중 고위험(정지거리 안) 차량이 송신자 범위 밖이면 가지치기 면제."""
+    def __call__(self, i, s, ctx):
+        A, x, back, v = ctx["A"], ctx["x"], ctx["back"], ctx["v"]
+        urgent = (back > 0) & (back <= v * 1.5 + v * v / 12.0)
+        cover_urgent = (A[i] & (x < x[i]) & urgent & ~A[s]).any()
+        if cover_urgent:
+            g0 = self.g; self.g = -1
+            out = UrgencyRAC.__call__(self, i, s, ctx); self.g = g0
+            return out
+        return super().__call__(i, s, ctx)
+
+
+class UrgencyRAC4(UrgencyRAC2):
+    """D6: 우선순위 가중 alpha, 손실 >= g_off 이면 가지치기 끔(그때만)."""
+    def __init__(self, alpha=1.0, g_off=0.05, eps_mid=0.05):
+        super().__init__(0.01, eps_mid, 2.0, g_off, True)
+        self.alpha_ = alpha
+        self.name = f"RAC-U4(a{alpha},goff{g_off})"
+    def __call__(self, i, s, ctx):
+        crit = self.c[i] >= self.theta
+        new, m = self.gain(i, s, ctx)
+        if ctx["loss"] < self.prune_off and new < self.g and not crit:
+            return False, 0.0
+        prog = min(max(0.0, ctx["x"][s] - ctx["x"][i]), ctx["r"]) / ctx["r"]
+        pr = self.alpha_ * prog + (1 - self.alpha_) * new / m + self.gamma * crit
+        return True, TMAX * (1 - min(pr, 1.0))
