@@ -49,8 +49,9 @@ def risk(v, hazard):
     return float(W @ [f_d, f_v, f_t])
 
 
-def propagate(vehicles, src, hazard, radius, policy):
-    """src에서 시작한 경고 1회의 전파. (수신 집합, 재전송 차량, 전송 수, 홉 수)"""
+def propagate(vehicles, src, hazard, radius, policy, parent=None):
+    """src에서 시작한 경고 1회의 전파. (수신 집합, 방송한 차량 목록, 홉 수)
+    parent에 dict를 넘기면 {수신 차량: 처음 보내준 차량}을 채운다 (시각화용)."""
     pos = np.array([v.position for v in vehicles])
     idx = {id(v): i for i, v in enumerate(vehicles)}
     dist = np.linalg.norm(pos[:, None] - pos[None], axis=-1)
@@ -67,6 +68,8 @@ def propagate(vehicles, src, hazard, radius, policy):
                     continue
                 received.add(j)
                 hop[j] = hop[i] + 1
+                if parent is not None:
+                    parent[j] = i
                 if policy == "flooding" or risk(vehicles[j], hazard) >= T:
                     nxt.append(j)
         frontier = nxt

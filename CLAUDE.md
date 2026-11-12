@@ -81,6 +81,8 @@ Claude Code용 프로젝트 맥락 문서 (claude.ai 채팅 요약, 2026-11-12 �
 - 확인할 점: 원래 GA 값의 전이성, "느리게 달려서 안전"인지 (평균 속도 함께 보기)
 
 **파일 위치**
+- highway_v2v/v2v_test.py: 다중 시드 도달률·재전송 수 비교 (flooding vs 역치)
+- highway_v2v/v2v_watch.py: 경고 전파 뷰어 (창 재생, --save로 GIF)
 - 이 레포에는 아직 코드 없음. 아래 파일은 claude.ai 채팅 작업 공간에 있음 → 필요하면 레포로 옮길 것
   - highway_재검증/highway_ga_live.py (실시간 진행률, --watch N, tiny/quick/full), plot_results.py, viz.py
   - 예비 분석: prelim.py, labelcheck.py
