@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="910" viewBox="0 0 1120 910" font-family="WenQuanYi Zen Hei, sans-serif">
+<rect width="1120" height="910" fill="#fff"/>
+<text x="40" y="44" font-size="24" font-weight="bold">ESP32 DevKit V1 (30핀) ↔ AS5600 배선</text>
+<rect x="200" y="80" width="220" height="610" rx="10" fill="#1d3557"/>
+<rect x="250" y="88" width="120" height="44" rx="3" fill="#adb5bd"/><text x="310" y="116" font-size="13" text-anchor="middle">안테나</text>
+<rect x="268" y="180" width="84" height="100" rx="3" fill="#8d99ae"/><text x="310" y="235" font-size="14" text-anchor="middle" fill="#fff">ESP32</text>
+<rect x="280" y="672" width="60" height="30" rx="3" fill="#adb5bd"/><text x="310" y="722" font-size="13" text-anchor="middle">USB</text>
+<rect x="209" y="144" width="12" height="12" fill="#ced4da"/>
+<text x="232" y="155" font-size="12" fill="#dee2e6" text-anchor="start">EN</text>
+<rect x="209" y="180" width="12" height="12" fill="#ced4da"/>
+<text x="232" y="191" font-size="12" fill="#dee2e6" text-anchor="start">VP</text>
+<rect x="209" y="216" width="12" height="12" fill="#ced4da"/>
+<text x="232" y="227" font-size="12" fill="#dee2e6" text-anchor="start">VN</text>
+<rect x="209" y="252" width="12" height="12" fill="#ced4da"/>
+<text x="232" y="263" font-size="12" fill="#dee2e6" text-anchor="start">D34</text>
+<rect x="209" y="288" width="12" height="12" fill="#ced4da"/>
+<text x="232" y="299" font-size="12" fill="#dee2e6" text-anchor="start">D35</text>
+<rect x="209" y="324" width="12" height="12" fill="#ced4da"/>
+<text x="232" y="335" font-size="12" fill="#dee2e6" text-anchor="start">D32</text>
+<rect x="209" y="360" width="12" height="12" fill="#ced4da"/>
+<text x="232" y="371" font-size="12" fill="#dee2e6" text-anchor="start">D33</text>
+<rect x="209" y="396" width="12" height="12" fill="#ced4da"/>
+<text x="232" y="407" font-size="12" fill="#dee2e6" text-anchor="start">D25</text>
+<rect x="209" y="432" width="12" height="12" fill="#ced4da"/>
+<text x="232" y="443" font-size="12" fill="#dee2e6" text-anchor="start">D26</text>
+<rect x="209" y="468" width="12" height="12" fill="#ced4da"/>
+<text x="232" y="479" font-size="12" fill="#dee2e6" text-anchor="start">D27</text>
+<rect x="209" y="504" width="12" height="12" fill="#ced4da"/>
+<text x="232" y="515" font-size="12" fill="#dee2e6" text-anchor="start">D14</text>
+<rect x="209" y="540" width="12" height="12" fill="#ced4da"/>
+<text x="232" y="551" font-size="12" fill="#dee2e6" text-anchor="start">D12</text>
+<rect x="209" y="576" width="12" height="12" fill="#ced4da"/>
+<text x="232" y="587" font-size="12" fill="#dee2e6" text-anchor="start">D13</text>
+<rect x="209" y="612" width="12" height="12" fill="#ced4da"/>
+<text x="232" y="623" font-size="12" fill="#dee2e6" text-anchor="start">GND</text>
+<rect x="209" y="648" width="12" height="12" fill="#ced4da"/>
+<text x="232" y="659" font-size="12" fill="#dee2e6" text-anchor="start">VIN</text>
+<rect x="399" y="144" width="12" height="12" fill="#ced4da"/>
+<text x="388" y="155" font-size="12" fill="#dee2e6" text-anchor="end">D23</text>
+<rect x="397" y="178" width="16" height="16" fill="#2ca02c" stroke="#ffd166" stroke-width="3"/>
+<text x="388" y="191" font-size="14" font-weight="bold" fill="#ffd166" text-anchor="end">D22</text>
+<rect x="399" y="216" width="12" height="12" fill="#ced4da"/>
+<text x="388" y="227" font-size="12" fill="#dee2e6" text-anchor="end">TX0</text>
+<rect x="399" y="252" width="12" height="12" fill="#ced4da"/>
+<text x="388" y="263" font-size="12" fill="#dee2e6" text-anchor="end">RX0</text>
+<rect x="397" y="286" width="16" height="16" fill="#1f77b4" stroke="#ffd166" stroke-width="3"/>
+<text x="388" y="299" font-size="14" font-weight="bold" fill="#ffd166" text-anchor="end">D21</text>
+<rect x="399" y="324" width="12" height="12" fill="#ced4da"/>
+<text x="388" y="335" font-size="12" fill="#dee2e6" text-anchor="end">D19</text>
+<rect x="399" y="360" width="12" height="12" fill="#ced4da"/>
+<text x="388" y="371" font-size="12" fill="#dee2e6" text-anchor="end">D18</text>
+<rect x="399" y="396" width="12" height="12" fill="#ced4da"/>
+<text x="388" y="407" font-size="12" fill="#dee2e6" text-anchor="end">D5</text>
+<rect x="399" y="432" width="12" height="12" fill="#ced4da"/>
+<text x="388" y="443" font-size="12" fill="#dee2e6" text-anchor="end">TX2</text>
+<rect x="399" y="468" width="12" height="12" fill="#ced4da"/>
+<text x="388" y="479" font-size="12" fill="#dee2e6" text-anchor="end">RX2</text>
+<rect x="399" y="504" width="12" height="12" fill="#ced4da"/>
+<text x="388" y="515" font-size="12" fill="#dee2e6" text-anchor="end">D4</text>
+<rect x="399" y="540" width="12" height="12" fill="#ced4da"/>
+<text x="388" y="551" font-size="12" fill="#dee2e6" text-anchor="end">D2</text>
+<rect x="399" y="576" width="12" height="12" fill="#ced4da"/>
+<text x="388" y="587" font-size="12" fill="#dee2e6" text-anchor="end">D15</text>
+<rect x="397" y="610" width="16" height="16" fill="#222222" stroke="#ffd166" stroke-width="3"/>
+<text x="388" y="623" font-size="14" font-weight="bold" fill="#ffd166" text-anchor="end">GND</text>
+<rect x="397" y="646" width="16" height="16" fill="#d62728" stroke="#ffd166" stroke-width="3"/>
+<text x="388" y="659" font-size="14" font-weight="bold" fill="#ffd166" text-anchor="end">3V3</text>
+<rect x="790" y="220" width="200" height="330" rx="8" fill="#3a86ff"/>
+<rect x="860" y="345" width="60" height="60" fill="#222"/><circle cx="890" cy="375" r="22" fill="none" stroke="#bbb" stroke-dasharray="4 3"/>
+<text x="890" y="250" font-size="18" font-weight="bold" fill="#fff" text-anchor="middle">AS5600</text>
+<text x="890" y="435" font-size="11" fill="#fff" text-anchor="middle">칩 위 0.5~3 mm에</text>
+<text x="890" y="450" font-size="11" fill="#fff" text-anchor="middle">직경 착자 자석</text>
+<rect x="782" y="252" width="16" height="16" fill="#d62728" stroke="#ffd166" stroke-width="3"/>
+<text x="806" y="265" font-size="14" fill="#fff" font-weight="bold">VCC</text>
+<rect x="784" y="294" width="12" height="12" fill="#ced4da"/>
+<text x="806" y="305" font-size="14" fill="#fff" font-weight="normal">OUT</text>
+<rect x="782" y="332" width="16" height="16" fill="#222222" stroke="#ffd166" stroke-width="3"/>
+<text x="806" y="345" font-size="14" fill="#fff" font-weight="bold">GND</text>
+<rect x="782" y="372" width="16" height="16" fill="#222222" stroke="#ffd166" stroke-width="3"/>
+<text x="806" y="385" font-size="14" fill="#fff" font-weight="bold">DIR</text>
+<rect x="782" y="412" width="16" height="16" fill="#2ca02c" stroke="#ffd166" stroke-width="3"/>
+<text x="806" y="425" font-size="14" fill="#fff" font-weight="bold">SCL</text>
+<rect x="782" y="452" width="16" height="16" fill="#1f77b4" stroke="#ffd166" stroke-width="3"/>
+<text x="806" y="465" font-size="14" fill="#fff" font-weight="bold">SDA</text>
+<rect x="784" y="494" width="12" height="12" fill="#ced4da"/>
+<text x="806" y="505" font-size="14" fill="#fff" font-weight="normal">GPO</text>
+<path d="M413,654 L1050,654 L1050,180 L745,180 L745,260 L782,260" fill="none" stroke="#d62728" stroke-width="4" stroke-linejoin="round"/>
+<path d="M413,618 L640,618 L640,340 L782,340" fill="none" stroke="#222222" stroke-width="4" stroke-linejoin="round"/>
+<path d="M782,380 L640,380" fill="none" stroke="#222222" stroke-width="4" stroke-linejoin="round"/>
+<circle cx="640" cy="380" r="6" fill="#222222"/>
+<path d="M413,186 L580,186 L580,420 L630,420 A10,10 0 0 1 650,420 L782,420" fill="none" stroke="#2ca02c" stroke-width="4" stroke-linejoin="round"/>
+<path d="M413,294 L545,294 L545,460 L630,460 A10,10 0 0 1 650,460 L782,460" fill="none" stroke="#1f77b4" stroke-width="4" stroke-linejoin="round"/>
+<text x="880" y="172" font-size="14" font-weight="bold" fill="#d62728">3V3 → VCC</text>
+<text x="660" y="588" font-size="14" font-weight="bold" fill="#222222">GND → GND, DIR</text>
+<text x="440" y="178" font-size="14" font-weight="bold" fill="#2ca02c">GPIO22 → SCL</text>
+<text x="440" y="286" font-size="14" font-weight="bold" fill="#1f77b4">GPIO21 → SDA</text>
+<text x="654" y="364" font-size="11" fill="#555">● = 연결점</text>
+<text x="60" y="760" font-size="14" fill="#333">· 굵은 노란 테두리 핀만 연결. OUT·GPO는 비워 둠</text>
+<text x="60" y="788" font-size="14" fill="#333">· ESP32 오른쪽 GND는 아래에서 두 번째, 3V3는 맨 아래 (VIN·5V 아님)</text>
+<text x="60" y="816" font-size="14" fill="#333">· DIR을 GND에 묶으면 시계방향 회전 시 값 증가</text>
+<text x="60" y="844" font-size="14" fill="#333">· 보드마다 핀 배치가 다를 수 있으니 실크 인쇄 이름(D21, D22, 3V3, GND)으로 확인</text>
+<text x="60" y="872" font-size="14" fill="#333">· 전자석은 MOSFET·플라이백 다이오드를 거쳐 별도 전원으로, GND만 공통</text>
+</svg>
