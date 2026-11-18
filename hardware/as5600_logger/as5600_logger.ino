@@ -5,6 +5,7 @@ const int PIN_SDA = 21;
 const int PIN_SCL = 22;
 const int PIN_ZERO_BTN = 0;        // 보드의 BOOT 버튼 (GPIO0) = 영점 버튼
 const uint32_t SAMPLE_US = 5000;   // 5 ms = 200 Hz
+const int32_t  ZERO_COUNT = 1000;  // 영점 위치에서 count 값 (뒤로 1000칸 ≈ 88° 여유)
 
 // ---- AS5600 레지스터 ----
 const uint8_t AS5600_ADDR   = 0x36;
@@ -65,7 +66,7 @@ void startMeasuring() {
   measuring = true;
   startMs = millis();
   lastSampleUs = micros();
-  Serial.println("t_ms,count,deg,total_deg");
+  Serial.println("t_ms,count,deg");
 }
 
 void printHelp() {
@@ -140,14 +141,13 @@ void loop() {
   if (d < -2048) turnCount++;
   prevRaw = raw;
 
-  // 영점 기준 위치: 0~4095 (한 바퀴 돌면 다시 0)
-  uint16_t count = (uint16_t)((raw - zeroRaw + 4096) % 4096);
-  // 영점 기준 누적 각도: 반대로 돌면 음수, 여러 바퀴면 360 넘음
-  int32_t total = turnCount * 4096 + (int32_t)raw - (int32_t)zeroRaw;
+  // 영점에서 움직인 양 (4095<->0 경계에서 튀지 않음, 뒤로 가면 음수)
+  int32_t moved = turnCount * 4096 + (int32_t)raw - (int32_t)zeroRaw;
+  // 영점 = 1000, 앞으로 가면 증가, 뒤로 가면 감소
+  int32_t count = ZERO_COUNT + moved;
 
-  Serial.printf("%lu,%u,%.2f,%.2f\n",
+  Serial.printf("%lu,%ld,%.2f\n",
                 (unsigned long)(millis() - startMs),
-                count,
-                count * 360.0f / 4096.0f,
-                total * 360.0f / 4096.0f);
+                (long)count,
+                moved * 360.0f / 4096.0f);
 }
