@@ -1,13 +1,14 @@
 """AS5600 시행 데이터 수집기.
 
-a 60 + Enter : 장애물 각도를 60°로 설정 (바꿀 때만 다시 입력)
+a 60 + Enter : 장애물 각도 60° 설정 (평가할 때만. 학습용은 입력 안 함)
+a + Enter    : 장애물 없음으로 되돌림
 q + Enter : 시행 시작 (그 위치가 0°)  /  다시 q + Enter : 시행 끝 -> 저장
 z + Enter : 영점 다시 맞춤
 s + Enter : 자석 상태
 x + Enter : 종료
 
 저장 위치
-  data/trials.csv          시행마다 한 줄 (장애물 각도, 최대 각도, 닿음 여부)
+  data/trials.csv          시행마다 한 줄 (최대 각도, 장애물 있으면 각도·닿음 여부)
   data/raw/trial_001.csv   시행별 전체 시계열 (1D CNN 입력용)
 
 실행: python collect_trials.py COM3
@@ -76,8 +77,8 @@ def save_trial(no, data, obstacle):
     row = {
         "trial": no,
         "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "obstacle_deg": obstacle,
-        "hit": int(max(degs) >= obstacle - HIT_MARGIN),
+        "obstacle_deg": "" if obstacle is None else obstacle,
+        "hit": "" if obstacle is None else int(max(degs) >= obstacle - HIT_MARGIN),
         "n_samples": len(data),
         "duration_ms": data[-1][0] - data[0][0],
         "max_deg": round(max(degs), 2),
@@ -106,22 +107,26 @@ def main():
     trial = next_trial_no()
     obstacle = None
     print(f"연결됨: {PORT}  /  다음 시행 번호: {trial}")
-    print("a 60: 장애물 60°   q: 시작/끝   z: 영점   s: 자석 상태   x: 종료"
-          "  (입력 후 Enter)")
+    print("q: 시작/끝   z: 영점   s: 자석 상태   x: 종료   "
+          "a 60: 장애물 60°(평가용)   a: 장애물 없음  (입력 후 Enter)")
+    print("지금은 장애물 없음 (학습용)")
 
     try:
         while True:
             cmd = input().strip().lower()
             if cmd.startswith("a"):
+                arg = cmd[1:].strip()
+                if not arg:
+                    obstacle = None
+                    print("장애물 없음 (학습용 데이터)")
+                    continue
                 try:
-                    obstacle = float(cmd[1:])
-                    print(f"장애물 각도 = {obstacle}°")
+                    obstacle = float(arg)
+                    print(f"장애물 각도 = {obstacle}° (평가용 데이터)")
                 except ValueError:
-                    print("예: a 60")
+                    print("예: a 60  /  장애물 없음은 a")
             elif cmd == "q":
-                if not recording and obstacle is None:
-                    print("먼저 장애물 각도를 입력하세요. 예: a 60")
-                elif not recording:
+                if not recording:
                     with lock:
                         samples.clear()
                         recording = True
@@ -137,10 +142,12 @@ def main():
                         print("데이터가 없어 저장하지 않음 (센서 연결 확인)")
                         continue
                     row = save_trial(trial, data, obstacle)
-                    print(f"[시행 {trial}] 저장  장애물 {obstacle}°  "
-                          f"최대 {row['max_deg']}°  "
-                          f"-> {'닿음' if row['hit'] else '안 닿음'}  "
-                          f"({row['duration_ms']} ms, {row['n_samples']}개)")
+                    msg = f"[시행 {trial}] 저장  최대 {row['max_deg']}°"
+                    if obstacle is not None:
+                        msg += (f"  장애물 {obstacle}° -> "
+                                f"{'닿음' if row['hit'] else '안 닿음'}")
+                    print(f"{msg}  ({row['duration_ms']} ms, "
+                          f"{row['n_samples']}개)")
                     trial += 1
             elif cmd in ("z", "s"):
                 ser.write(cmd.encode())
