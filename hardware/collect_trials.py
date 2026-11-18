@@ -1,12 +1,13 @@
 """AS5600 시행 데이터 수집기.
 
+a 60 + Enter : 장애물 각도를 60°로 설정 (바꿀 때만 다시 입력)
 q + Enter : 시행 시작 (그 위치가 0°)  /  다시 q + Enter : 시행 끝 -> 저장
 z + Enter : 영점 다시 맞춤
 s + Enter : 자석 상태
 x + Enter : 종료
 
 저장 위치
-  data/trials.csv          시행마다 한 줄 (최대 각도 등 요약)
+  data/trials.csv          시행마다 한 줄 (장애물 각도, 최대 각도, 닿음 여부)
   data/raw/trial_001.csv   시행별 전체 시계열 (1D CNN 입력용)
 
 실행: python collect_trials.py COM3
@@ -25,7 +26,8 @@ BAUD = 115200
 DATA_DIR = "data"
 RAW_DIR = os.path.join(DATA_DIR, "raw")
 SUMMARY = os.path.join(DATA_DIR, "trials.csv")
-FIELDS = ["trial", "time", "n_samples", "duration_ms",
+HIT_MARGIN = 1.0      # 최대 각도가 (장애물 각도 - 1°) 이상이면 닿음으로 판정
+FIELDS = ["trial", "time", "obstacle_deg", "hit", "n_samples", "duration_ms",
           "max_deg", "min_deg", "final_deg", "raw_file"]
 
 recording = False
@@ -62,7 +64,7 @@ def reader(ser):
                 samples.append((t, c, d))
 
 
-def save_trial(no, data):
+def save_trial(no, data, obstacle):
     os.makedirs(RAW_DIR, exist_ok=True)
     raw_file = os.path.join(RAW_DIR, f"trial_{no:03d}.csv")
     with open(raw_file, "w", newline="", encoding="utf-8") as f:
@@ -74,6 +76,8 @@ def save_trial(no, data):
     row = {
         "trial": no,
         "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "obstacle_deg": obstacle,
+        "hit": int(max(degs) >= obstacle - HIT_MARGIN),
         "n_samples": len(data),
         "duration_ms": data[-1][0] - data[0][0],
         "max_deg": round(max(degs), 2),
@@ -100,14 +104,24 @@ def main():
     th.start()
 
     trial = next_trial_no()
+    obstacle = None
     print(f"연결됨: {PORT}  /  다음 시행 번호: {trial}")
-    print("q: 시작/끝   z: 영점   s: 자석 상태   x: 종료  (입력 후 Enter)")
+    print("a 60: 장애물 60°   q: 시작/끝   z: 영점   s: 자석 상태   x: 종료"
+          "  (입력 후 Enter)")
 
     try:
         while True:
             cmd = input().strip().lower()
-            if cmd == "q":
-                if not recording:
+            if cmd.startswith("a"):
+                try:
+                    obstacle = float(cmd[1:])
+                    print(f"장애물 각도 = {obstacle}°")
+                except ValueError:
+                    print("예: a 60")
+            elif cmd == "q":
+                if not recording and obstacle is None:
+                    print("먼저 장애물 각도를 입력하세요. 예: a 60")
+                elif not recording:
                     with lock:
                         samples.clear()
                         recording = True
@@ -122,10 +136,11 @@ def main():
                     if len(data) < 2:
                         print("데이터가 없어 저장하지 않음 (센서 연결 확인)")
                         continue
-                    row = save_trial(trial, data)
-                    print(f"[시행 {trial}] 저장  최대 {row['max_deg']}°  "
-                          f"최종 {row['final_deg']}°  "
-                          f"{row['duration_ms']} ms, {row['n_samples']}개")
+                    row = save_trial(trial, data, obstacle)
+                    print(f"[시행 {trial}] 저장  장애물 {obstacle}°  "
+                          f"최대 {row['max_deg']}°  "
+                          f"-> {'닿음' if row['hit'] else '안 닿음'}  "
+                          f"({row['duration_ms']} ms, {row['n_samples']}개)")
                     trial += 1
             elif cmd in ("z", "s"):
                 ser.write(cmd.encode())
