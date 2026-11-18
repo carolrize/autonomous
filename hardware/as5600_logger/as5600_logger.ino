@@ -48,7 +48,7 @@ void printMagnetStatus() {
   else                   Serial.println("# 자석 위치 정상");
 }
 
-// 현재 위치를 0으로
+// 현재 위치를 영점으로
 void setZero() {
   uint16_t raw;
   if (!readRawAngle(raw)) {
@@ -62,7 +62,7 @@ void setZero() {
 }
 
 void startMeasuring() {
-  setZero();                       // 시작 위치 = 0
+  setZero();                       // 시작 위치 = 영점
   measuring = true;
   startMs = millis();
   lastSampleUs = micros();
@@ -70,8 +70,8 @@ void startMeasuring() {
 }
 
 void printHelp() {
-  Serial.println("# q: 측정 시작/정지 (시작 위치가 0)");
-  Serial.println("# z 또는 BOOT 버튼: 지금 위치를 0으로");
+  Serial.println("# q: 측정 시작/정지 (시작 위치가 영점=1000)");
+  Serial.println("# z 또는 BOOT 버튼: 지금 위치를 영점(1000)으로");
   Serial.println("# s: 자석 상태");
 }
 
